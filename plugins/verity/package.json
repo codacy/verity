@@ -1,0 +1,10 @@
+{
+  "name": "@codacy/verity-plugin",
+  "version": "0.31.4",
+  "private": true,
+  "description": "Dependency manifest for the Verity Claude Code plugin. Claude Code runs `npm ci --ignore-scripts` here on install and on every version bump — this file is how the plugin installs and updates the Verity CLI. The committed pin tracks the last PUBLISHED CLI so local `--plugin-dir` testing works; the release job stamps it to the version being released.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@codacy/verity-cli": "0.31.4"
+  }
+}
