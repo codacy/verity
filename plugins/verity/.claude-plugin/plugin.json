@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "verity",
+  "displayName": "Verity",
+  "version": "0.33.1",
+  "description": "An independent quality gate for AI-generated code. A different model reviews what the agent just wrote — against your project's standard — before it lands.",
+  "author": {
+    "name": "Codacy",
+    "url": "https://codacy.com"
+  },
+  "homepage": "https://verity.md",
+  "repository": "https://github.com/codacy/verity",
+  "license": "Apache-2.0",
+  "keywords": [
+    "code-review",
+    "code-quality",
+    "security",
+    "static-analysis",
+    "quality-gate",
+    "codacy"
+  ]
+}
