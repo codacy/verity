@@ -75,7 +75,7 @@ fleet cost tree across every agent. Scaling agents never means losing the bill.
 
 ## What the plugin installs
 
-Eight skills under `/verity:` and six hooks. Details, including exactly what runs and
+Nine skills under `/verity:` and six hooks. Details, including exactly what runs and
 when, are in [`plugins/verity/README.md`](./plugins/verity/README.md).
 
 | Skill | |
