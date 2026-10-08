@@ -1,0 +1,42 @@
+{
+  "name": "verity",
+  "description": "Claude Code plugins from Codacy.",
+  "owner": {
+    "name": "Codacy",
+    "url": "https://codacy.com"
+  },
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "verity",
+      "source": "verity",
+      "displayName": "Verity",
+      "description": "An independent quality gate for AI-generated code. A different model reviews what the agent just wrote \u2014 against your project's standard \u2014 before it lands.",
+      "homepage": "https://verity.md",
+      "repository": "https://github.com/codacy/verity",
+      "license": "Apache-2.0",
+      "category": "code-quality",
+      "keywords": [
+        "code-review",
+        "code-quality",
+        "security",
+        "static-analysis",
+        "quality-gate",
+        "codacy"
+      ],
+      "relevance": {
+        "topic": "Verity",
+        "signals": {
+          "cli": [
+            "verity"
+          ],
+          "filesRead": [
+            "**/.verity/**"
+          ]
+        }
+      }
+    }
+  ]
+}
