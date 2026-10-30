@@ -1,0 +1,313 @@
+# Verity — Patterns Reference
+# Research-backed catalog used by /verity:setup to synthesize project Standards.
+# This is NOT a Standard — it is the reference from which Standards are built.
+
+# =============================================================================
+# 1. Quality Dimensions (always 4)
+# =============================================================================
+
+quality_dimensions:
+  - id: comprehensibility
+    description: "Code readable in one context load"
+    signals:
+      - metric: file_length
+        threshold: 300
+        unit: lines
+        rationale: "AI context windows degrade on large files (>300 lines ~ 3,000 tokens)"
+        source: "Stanford 'Lost in the Middle' — >30% accuracy drop for mid-context info"
+      - metric: cyclomatic_complexity
+        threshold: 15
+        unit: per_function
+        rationale: "Complexity-aware feedback improves AI Pass@1 by 35.71%"
+        source: "Multiple studies on CCN and LLM performance"
+      - metric: function_length
+        threshold: 50
+        unit: lines
+        rationale: "Short functions are easier for agents to modify safely"
+      - metric: naming_quality
+        tool: ai
+        rationale: "Descriptive names: 34.2% AI match rate vs 16.6% obfuscated (r=0.945)"
+        source: "JetBrains AI-Friendly Code Report"
+
+  - id: modularity
+    description: "Modify one concern without touching 3+ files"
+    signals:
+      - metric: single_responsibility
+        tool: ai
+        rationale: "AI performance drops sharply at 3+ files requiring modification"
+        source: "CodeScene, JetBrains, Factory.ai, Marmelab consensus"
+      - metric: shallow_abstractions
+        tool: ai
+        rationale: "LLMs achieve only 38.81% accuracy on design pattern recognition"
+        source: "Deep inheritance vs shallow composition studies"
+
+  - id: type_safety
+    description: "Type system catches errors before runtime"
+    signals:
+      - metric: strict_types
+        languages: [typescript, python]
+        rationale: ">50% reduction in compilation errors with type constraints"
+        source: "ETH Zurich type annotation study"
+        rules_by_language:
+          typescript:
+            tool: eslint
+            rules:
+              - "@typescript-eslint/no-explicit-any"
+              - "@typescript-eslint/explicit-function-return-type"
+          python:
+            tool: ruff
+            rules:
+              - "ANN001"  # missing type annotation for function argument
+              - "ANN201"  # missing return type annotation
+
+  - id: test_adequacy
+    description: "Tests define expected behavior for agents"
+    signals:
+      - metric: test_coverage
+        threshold: 80
+        unit: percent
+        ai_threshold: 90
+        rationale: "SonarQube recommends 90% for AI-generated code (vs 80% human)"
+        source: "SonarQube AI code quality guidelines"
+      - metric: test_quality
+        tool: ai
+        rationale: "Tests are the primary safety net for AI agents"
+        source: "OpenObserve: AI test agents grew 380 to 700+ tests, 85% flaky reduction"
+
+# =============================================================================
+# 2. Security Patterns (always all 7)
+# =============================================================================
+
+security_patterns:
+  # --- Critical severity (tool-enforceable) ---
+
+  - id: no-hardcoded-secrets
+    description: "No secrets, API keys, passwords, or tokens in source code"
+    severity: critical
+    cwe: [CWE-798]
+    enforced_by:
+      - tool: Trivy
+        config:
+          scanners: [secret]
+      - tool: Semgrep
+        rules: [generic.secrets]
+    secrets_patterns:
+      - name: AWS Access Key
+        pattern: 'AKIA[0-9A-Z]{16}'
+      - name: AWS Secret Key
+        pattern: '(?i)aws_secret_access_key\s*[:=]\s*[A-Za-z0-9/+=]{40}'
+      - name: GitHub Token
+        pattern: '(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}'
+      - name: Generic API Key
+        pattern: '(?i)(api[_-]?key|apikey|api[_-]?secret)\s*[:=]\s*[''""][A-Za-z0-9+/=]{20,}[''""]'
+      - name: Database URL
+        pattern: '(postgres|mysql|mongodb|redis)://[^\s''"]{10,}'
+      - name: Private Key
+        pattern: '-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'
+      - name: JWT Secret
+        pattern: '(?i)(jwt[_-]?secret|jwt[_-]?key)\s*[:=]\s*[''""][^''"]{8,}[''""]'
+      - name: Slack Token
+        pattern: 'xox[bpors]-[0-9]{10,}-[A-Za-z0-9-]+'
+      - name: Stripe Key
+        pattern: '(sk|pk)_(test|live)_[A-Za-z0-9]{24,}'
+
+  - id: input-sanitization
+    description: "All user input validated and sanitized before use"
+    severity: critical
+    cwe: [CWE-20, CWE-80, CWE-89, CWE-117]
+    enforced_by:
+      - tool: Semgrep
+        rules:
+          - typescript.express.security
+          - python.flask.security
+          - python.django.security
+
+  - id: parameterized-queries
+    description: "Database queries use parameters, never string concatenation"
+    severity: critical
+    cwe: [CWE-89]
+    enforced_by:
+      - tool: Semgrep
+        rules:
+          - javascript.lang.security.audit.sqli
+          - python.lang.security.audit.sqli
+
+  # --- High severity (mixed tool + AI) ---
+
+  - id: dependency-verification
+    description: "No known-vulnerable dependencies"
+    severity: high
+    cwe: [CWE-1395]
+    enforced_by:
+      - tool: Trivy
+        config:
+          scanners: [vuln]
+          severity: [HIGH, CRITICAL]
+
+  - id: no-unsafe-deserialization
+    description: "No unsafe deserialization of untrusted data"
+    severity: high
+    cwe: [CWE-502]
+    enforced_by:
+      - tool: Semgrep
+        rules:
+          - python.lang.security.deserialization
+          - java.lang.security.deserialization
+
+  - id: access-control-checks
+    description: "Authorization verified on all sensitive operations"
+    severity: high
+    cwe: [CWE-639]
+    enforced_by: []  # AI-only — requires business context
+
+  - id: config-file-integrity
+    description: "Configuration files not manipulable by untrusted input"
+    severity: high
+    cwe: [CWE-15]
+    enforced_by: []  # AI-only
+
+# =============================================================================
+# 3. Language-Specific Security Anti-Patterns
+# =============================================================================
+
+language_security_patterns:
+  typescript:
+    - pattern: "eval()"
+      risk: "Arbitrary code execution"
+      cwe: CWE-94
+    - pattern: "innerHTML ="
+      risk: "Cross-site scripting (XSS)"
+      cwe: CWE-79
+    - pattern: "child_process.exec()"
+      risk: "Command injection"
+      cwe: CWE-78
+    - pattern: "new Function()"
+      risk: "Dynamic code generation"
+      cwe: CWE-94
+    - pattern: "document.write()"
+      risk: "DOM-based XSS"
+      cwe: CWE-79
+    - pattern: "String concatenation in SQL"
+      risk: "SQL injection"
+      cwe: CWE-89
+
+  python:
+    - pattern: "exec() / eval()"
+      risk: "Arbitrary code execution"
+      cwe: CWE-94
+    - pattern: "pickle.loads()"
+      risk: "Unsafe deserialization"
+      cwe: CWE-502
+    - pattern: "subprocess(shell=True)"
+      risk: "Command injection"
+      cwe: CWE-78
+    - pattern: "yaml.load() without SafeLoader"
+      risk: "Unsafe YAML deserialization"
+      cwe: CWE-502
+    - pattern: "os.system()"
+      risk: "Command injection"
+      cwe: CWE-78
+    - pattern: "f-string in SQL"
+      risk: "SQL injection"
+      cwe: CWE-89
+
+  go:
+    - pattern: "fmt.Sprintf in SQL"
+      risk: "SQL injection"
+      cwe: CWE-89
+    - pattern: "exec.Command with user input"
+      risk: "Command injection"
+      cwe: CWE-78
+    - pattern: "template.HTML()"
+      risk: "XSS via unescaped HTML"
+      cwe: CWE-79
+    - pattern: "net/http without TLS"
+      risk: "Cleartext transmission"
+      cwe: CWE-319
+
+  java:
+    - pattern: "Runtime.exec()"
+      risk: "Command injection"
+      cwe: CWE-78
+    - pattern: "ObjectInputStream.readObject()"
+      risk: "Unsafe deserialization"
+      cwe: CWE-502
+    - pattern: "Statement.execute() with concatenation"
+      risk: "SQL injection"
+      cwe: CWE-89
+    - pattern: "XMLParser without disabling external entities"
+      risk: "XXE injection"
+      cwe: CWE-611
+
+# =============================================================================
+# 4. Critical File Patterns (paths deserving deeper review)
+# =============================================================================
+
+critical_file_patterns:
+  - "auth/**"
+  - "middleware/**"
+  - "config/**"
+  - ".env*"
+  - "Dockerfile*"
+  - "docker-compose*"
+  - "migrations/**"
+  - "api/**"
+  - "routes/**"
+  - "security/**"
+  - "crypto/**"
+  - "**/secrets*"
+  - "**/credentials*"
+  - "*.pem"
+  - "*.key"
+
+# =============================================================================
+# 5. OWASP Top 10 (2021) Mapping
+# =============================================================================
+
+owasp_mapping:
+  A01_Broken_Access_Control:
+    standard_patterns: [access-control-checks]
+    description: "Missing or improper authorization checks"
+
+  A02_Cryptographic_Failures:
+    standard_patterns: [no-hardcoded-secrets, config-file-integrity]
+    description: "Weak crypto, exposed secrets, insecure transmission"
+
+  A03_Injection:
+    standard_patterns: [parameterized-queries, input-sanitization]
+    description: "SQL, NoSQL, OS, LDAP injection"
+
+  A04_Insecure_Design:
+    standard_patterns: [access-control-checks]
+    description: "Missing security controls in design"
+
+  A05_Security_Misconfiguration:
+    standard_patterns: [config-file-integrity, dependency-verification]
+    description: "Default configs, unnecessary features, missing hardening"
+
+  A06_Vulnerable_Components:
+    standard_patterns: [dependency-verification]
+    description: "Known CVEs in dependencies"
+
+  A07_Auth_Failures:
+    standard_patterns: [access-control-checks, no-hardcoded-secrets]
+    description: "Broken authentication, weak credentials"
+
+  A08_Software_Integrity:
+    standard_patterns: [dependency-verification, no-unsafe-deserialization]
+    description: "Untrusted data deserialization, compromised dependencies"
+
+  A09_Logging_Failures:
+    standard_patterns: [input-sanitization]
+    description: "Insufficient logging, log injection"
+
+  A10_SSRF:
+    standard_patterns: [input-sanitization]
+    description: "Server-side request forgery"
+
+# =============================================================================
+# 6. Static analysis
+#    Trivy only, configured and run by Verity itself (.verity/static-analysis.json).
+#    The per-language tool matrices, analysis modes and curated pattern ids that
+#    used to live here were removed with the other tools (spec/INIT-ONBOARDING-PLAN.md DC7).
+# =============================================================================
