@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "verity",
+  "displayName": "Verity by Codacy",
+  "version": "0.38.0",
+  "description": "A pair programmer for coding agents. Verity works alongside the agent, catches logic errors, intent gaps and security flaws before the code reaches Git, and hands the fix back. On logic where the order of events matters, such as payments and authentication, formal verification searches for the sequence that breaks your rule, and only a bug it reproduces on the real code blocks. What it catches feeds a knowledge base the next session builds on.",
+  "author": {
+    "name": "Codacy",
+    "url": "https://codacy.com"
+  },
+  "homepage": "https://verity.md",
+  "privacyPolicyUrl": "https://verity.md/privacy",
+  "repository": "https://github.com/codacy/verity",
+  "license": "Apache-2.0",
+  "keywords": [
+    "code-review",
+    "code-quality",
+    "security",
+    "static-analysis",
+    "quality-gate",
+    "codacy"
+  ]
+}
